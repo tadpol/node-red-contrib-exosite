@@ -1,0 +1,45 @@
+<script type="text/javascript">
+    RED.nodes.registerType('exo-write-client',{
+        category: 'output',
+        color: '#a6bbcf',
+        defaults: {
+            name: {value:""},
+            alias: {value:""},
+        },
+        credentials: {
+            cik: {type:"password"}
+        },
+        inputs:1,
+        outputs:0,
+        align: 'right',
+        icon: "white-globe.png",
+        label: function() {
+            return this.name||"exo-write-client";
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="exo-write-client">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row node-input-useAuth-row">
+        <label for="node-input-cik"><i class="fa fa-lock"></i> CIK</label>
+        <input type="password" id="node-input-cik">
+    </div>
+    <div class="form-row">
+        <label for="node-input-alias"><i class="fa fa-circle-o"></i> Alias</label>
+        <input type="text" id="node-input-alias" placeholder="alias">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="exo-write-client">
+    <p>A node that will write to a CIK on Exosite.</p>
+</script>
+
+<!--  vim: set ai et sw=4 ts=4 : -->
+
