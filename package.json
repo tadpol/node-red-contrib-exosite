@@ -5,7 +5,12 @@
     "dependencies" : {
         "follow-redirects":"0.0.3"
     },
-    "keywords": [ "node-red" ],
+    "license"      : "Simplified BSD",
+    "repository"   : {
+        "type":"git",
+        "url":"https://github.com/tadpol/node-red-node-exosite.git"
+    },
+    "keywords": [ "node-red", "exosite", "oneplatform" ],
     "node-red"     : {
         "nodes": {
             "exosite-http-data": "exosite/exosite-http-data.js"
