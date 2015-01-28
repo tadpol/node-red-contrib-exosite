@@ -1,6 +1,6 @@
 {
     "name"         : "node-red-node-exosite",
-    "version"      : "0.0.1",
+    "version"      : "0.1.0",
     "description"  : "A node for node-red that uses the data api to talk to Exosite's OnePlatform",
     "dependencies" : {
         "follow-redirects":"0.0.3"
