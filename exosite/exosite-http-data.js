@@ -8,7 +8,7 @@ module.exports = function(RED) {
         RED.nodes.createNode(this,config);
         var node = this;
         this.on('input', function(msg) {
-            node.status({fill:"blue",shape:"dot",text:"requesting"});
+            node.status({fill:"blue",shape:"dot",text:"writing"});
 
             var opts = urllib.parse('https://m2.exosite.com/onep:v1/stack/alias');
 			opts.method = 'POST';
@@ -40,6 +40,7 @@ module.exports = function(RED) {
 			opts.headers['content-length'] = Buffer.byteLength(payload);
 
 			var req = https.request(opts, function(result){
+				result.on('data', function (chunk) {});
                 result.on('end',function() {
                     node.status({});
                 });
@@ -64,7 +65,7 @@ module.exports = function(RED) {
         RED.nodes.createNode(this,config);
         var node = this;
         this.on('input', function(msg) {
-            node.status({fill:"blue",shape:"dot",text:"requesting"});
+            node.status({fill:"blue",shape:"dot",text:"reading"});
 
             var opts = urllib.parse('https://m2.exosite.com/onep:v1/stack/alias');
 			opts.method = 'GET';
