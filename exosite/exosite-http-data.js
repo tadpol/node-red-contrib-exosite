@@ -16,8 +16,11 @@ module.exports = function(RED) {
 		/*
 		 * There are three kinds
 		 * - productID+SN to Exosite.
+		 *   - Needs to call POST {pid}.m2…/provision/activate
 		 * - productID+SN to GMQ (localhost)
+		 *   - Needs to call POST localhost/provision/activate
 		 * - aliases on GWE device.
+		 *   - Needs to sh %{gwe --gateway-cik}
 		 */
 	}
 

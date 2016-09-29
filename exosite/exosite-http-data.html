@@ -5,6 +5,7 @@
         defaults: {
             productID: {value:""},
             serialNumber: {value:""},
+            connectBy: {value:""},
         },
         credentials: {
             cik: {type:"password"}
@@ -26,7 +27,10 @@
                     $('.exo-config-row').show();
                 }
             });
-        }
+            $('#exo-config-type-select').change();
+        },
+        oneditsave: function() { // might not need this
+        },
     });
     RED.nodes.registerType('exo-write-client',{
         category: 'output',
@@ -80,7 +84,7 @@
             <option value="GWE">GWE</option>
             <option value="GMQ">GMQ</option>
         </select>
-        <input type="hidden" id="node-input-repeat">
+        <input type="hidden" id="node-config-input-connectBy">
     </div>
 
     <div class="form-row exo-config-row">
