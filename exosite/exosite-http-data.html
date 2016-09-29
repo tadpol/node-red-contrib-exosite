@@ -1,10 +1,30 @@
 <script type="text/javascript">
+    RED.nodes.registerType('exo-config-client',{
+        category: 'config',
+        color: '#a6bbcf',
+        defaults: {
+            productID: {value:""},
+            serialNumber: {value:""},
+        },
+        credentials: {
+            cik: {type:"password"}
+        },
+        align: 'right',
+        icon: "exosite.png",
+        label: function() {
+            return (this.productID+"; "+this.serialNumber)||"exo-config-client";
+        },
+        labelStyle: function() {
+            return this.productID?"node_label_italic":"";
+        },
+    });
     RED.nodes.registerType('exo-write-client',{
         category: 'output',
         color: '#a6bbcf',
         defaults: {
             name: {value:""},
             alias: {value:""},
+            device: {value:"", type: "exo-config-client"},
         },
         credentials: {
             cik: {type:"password"}
@@ -25,6 +45,7 @@
         color: '#a6bbcf',
         defaults: {
             name: {value:""},
+            device: {value:"", type: "exo-config-client"},
         },
         credentials: {
             cik: {type:"password"}
@@ -41,10 +62,25 @@
     });
 </script>
 
+<script type="text/x-red" data-template-name="exo-config-client">
+    <div class="form-row exo-config-row">
+        <label for="node-config-input-productID"><i class="fa fa-tag"></i> Product ID</label>
+        <input type="text" id="node-config-input-productID" placeholder="Product ID">
+    </div>
+    <div class="form-row exo-config-row">
+        <label for="node-config-input-serialNumber"><i class="fa fa-circle-o"></i> Serial Number</label>
+        <input type="text" id="node-config-input-serialNumber" placeholder="Serial Number">
+    </div>
+</script>
+
 <script type="text/x-red" data-template-name="exo-write-client">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-device"><i class="fa fa-cube"></i> Device</label>
+        <input type="text" id="node-input-device">
     </div>
     <div class="form-row node-input-useAuth-row">
         <label for="node-input-cik"><i class="fa fa-lock"></i> CIK</label>
@@ -63,14 +99,14 @@
 </script>
 
 
-<script type="text/x-red" data-help-name="exo-write-client">
-    <p>A node that will write to a CIK on Exosite.</p>
-</script>
-
 <script type="text/x-red" data-template-name="exo-read-client">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-device"><i class="fa fa-cube"></i> Device</label>
+        <input type="text" id="node-input-device">
     </div>
     <div class="form-row node-input-useAuth-row">
         <label for="node-input-cik"><i class="fa fa-lock"></i> CIK</label>

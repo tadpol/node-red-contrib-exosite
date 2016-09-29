@@ -4,13 +4,44 @@ module.exports = function(RED) {
 	var urllib = require("url");
 	var querystring = require("querystring");
 
+	/**********************************************************************/
+	function ExositeConfigureClient(config) {
+		RED.nodes.createNode(this,config);
+		this.productID = config.productID;
+		this.serialNumber = config.serialNumber;
+
+		this.cik = function() {}
+
+		// TODO: if no CIK, then call POST /provision/activate
+		/*
+		 * There are three kinds
+		 * - productID+SN to Exosite.
+		 * - productID+SN to GMQ (localhost)
+		 * - aliases on GWE device.
+		 */
+	}
+
+	RED.nodes.registerType("exo-config-client", ExositeConfigureClient, {
+		credentials: {
+			cik: {type:"password"}
+		}
+	});
+
+	/**********************************************************************/
 	function ExositeWriteClient(config) {
 		RED.nodes.createNode(this,config);
 		var node = this;
 		this.on('input', function(msg) {
 			node.status({fill:"blue",shape:"dot",text:"writing"});
 
-			var opts = urllib.parse('https://m2.exosite.com/onep:v1/stack/alias');
+			var productID = "";
+			var device = RED.nodes.getNode(config.device);
+			if (device) {
+				this.credentials.cik = device.credentials.cik;
+				productID = device.productID + ".";
+			}
+
+			var opts = urllib.parse('https://'+productID+'m2.exosite.com/onep:v1/stack/alias');
 			opts.method = 'POST';
 			opts.headers = {};
 			opts.headers['X-Exosite-CIK'] = this.credentials.cik;
@@ -33,6 +64,7 @@ module.exports = function(RED) {
 				} else {
 					// this will fail.
 					payload = msg.payload+"";
+					// FIXME: log an error (status will be updated when call errors)
 				}
 			} else {
 				payload = querystring.stringify(msg.payload);
@@ -61,13 +93,21 @@ module.exports = function(RED) {
 		}
 	});
 
+	/**********************************************************************/
 	function ExositeReadClient(config) {
 		RED.nodes.createNode(this,config);
 		var node = this;
 		this.on('input', function(msg) {
 			node.status({fill:"blue",shape:"dot",text:"reading"});
 
-			var opts = urllib.parse('https://m2.exosite.com/onep:v1/stack/alias');
+			var productID = "";
+			var device = RED.nodes.getNode(config.device);
+			if (device) {
+				this.credentials.cik = device.credentials.cik;
+				productID = device.productID + ".";
+			}
+
+			var opts = urllib.parse('https://'+productID+'m2.exosite.com/onep:v1/stack/alias');
 			opts.method = 'GET';
 			opts.headers = {};
 			opts.headers['X-Exosite-CIK'] = this.credentials.cik;
