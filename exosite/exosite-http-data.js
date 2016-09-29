@@ -1,16 +1,16 @@
 module.exports = function(RED) {
 	"use strict";
 	var https = require("follow-redirects").https;
-    var urllib = require("url");
-    var querystring = require("querystring");
+	var urllib = require("url");
+	var querystring = require("querystring");
 
-    function ExositeWriteClient(config) {
-        RED.nodes.createNode(this,config);
-        var node = this;
-        this.on('input', function(msg) {
-            node.status({fill:"blue",shape:"dot",text:"writing"});
+	function ExositeWriteClient(config) {
+		RED.nodes.createNode(this,config);
+		var node = this;
+		this.on('input', function(msg) {
+			node.status({fill:"blue",shape:"dot",text:"writing"});
 
-            var opts = urllib.parse('https://m2.exosite.com/onep:v1/stack/alias');
+			var opts = urllib.parse('https://m2.exosite.com/onep:v1/stack/alias');
 			opts.method = 'POST';
 			opts.headers = {};
 			opts.headers['X-Exosite-CIK'] = this.credentials.cik;
@@ -41,33 +41,33 @@ module.exports = function(RED) {
 
 			var req = https.request(opts, function(result){
 				result.on('data', function (chunk) {});
-                result.on('end',function() {
-                    node.status({});
-                });
+				result.on('end',function() {
+					node.status({});
+				});
 			});
-            req.on('error',function(err) {
-                msg.payload = err.toString();
-                msg.statusCode = err.code;
-                node.send(msg);
-                node.status({fill:"red",shape:"ring",text:err.code});
-            });
+			req.on('error',function(err) {
+				msg.payload = err.toString();
+				msg.statusCode = err.code;
+				node.send(msg);
+				node.status({fill:"red",shape:"ring",text:err.code});
+			});
 			req.write(payload);
 			req.end();
-        });
-    }
-    RED.nodes.registerType("exo-write-client", ExositeWriteClient, {
-        credentials: {
-            cik: {type:"password"}
-        }
+		});
+	}
+	RED.nodes.registerType("exo-write-client", ExositeWriteClient, {
+		credentials: {
+			cik: {type:"password"}
+		}
 	});
 
-    function ExositeReadClient(config) {
-        RED.nodes.createNode(this,config);
-        var node = this;
-        this.on('input', function(msg) {
-            node.status({fill:"blue",shape:"dot",text:"reading"});
+	function ExositeReadClient(config) {
+		RED.nodes.createNode(this,config);
+		var node = this;
+		this.on('input', function(msg) {
+			node.status({fill:"blue",shape:"dot",text:"reading"});
 
-            var opts = urllib.parse('https://m2.exosite.com/onep:v1/stack/alias');
+			var opts = urllib.parse('https://m2.exosite.com/onep:v1/stack/alias');
 			opts.method = 'GET';
 			opts.headers = {};
 			opts.headers['X-Exosite-CIK'] = this.credentials.cik;
@@ -96,27 +96,27 @@ module.exports = function(RED) {
 				result.on('data', function (chunk) {
 					allData = allData + chunk;
 				});
-                result.on('end',function() {
+				result.on('end',function() {
 					msg.payload = querystring.parse(allData);
 					node.send(msg);
-                    node.status({});
-                });
+					node.status({});
+				});
 			});
-            req.on('error',function(err) {
-                msg.payload = err.toString();
-                msg.statusCode = err.code;
-                node.send(msg);
-                node.status({fill:"red",shape:"ring",text:err.code});
-            });
+			req.on('error',function(err) {
+				msg.payload = err.toString();
+				msg.statusCode = err.code;
+				node.send(msg);
+				node.status({fill:"red",shape:"ring",text:err.code});
+			});
 			req.end();
-        });
+		});
 	}
-    RED.nodes.registerType("exo-read-client", ExositeReadClient, {
-        credentials: {
-            cik: {type:"password"}
-        }
+	RED.nodes.registerType("exo-read-client", ExositeReadClient, {
+		credentials: {
+			cik: {type:"password"}
+		}
 	});
 
 }
 
-/*  vim: set cin sw=4 ts=4 : */
+/*	vim: set cin sw=4 ts=4 : */
