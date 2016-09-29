@@ -17,6 +17,16 @@
         labelStyle: function() {
             return this.productID?"node_label_italic":"";
         },
+        oneditprepare: function() {
+            $("#exo-config-type-select").change(function() {
+                var id = $("#exo-config-type-select").val();
+                if (id == "GWE") {
+                    $('.exo-config-row').hide();
+                } else {
+                    $('.exo-config-row').show();
+                }
+            });
+        }
     });
     RED.nodes.registerType('exo-write-client',{
         category: 'output',
@@ -63,6 +73,16 @@
 </script>
 
 <script type="text/x-red" data-template-name="exo-config-client">
+    <div class="form-row">
+        <label for=""><i class="fa fa-repeat"></i> Using</label>
+        <select id="exo-config-type-select">
+            <option value="Direct">Direct</option>
+            <option value="GWE">GWE</option>
+            <option value="GMQ">GMQ</option>
+        </select>
+        <input type="hidden" id="node-input-repeat">
+    </div>
+
     <div class="form-row exo-config-row">
         <label for="node-config-input-productID"><i class="fa fa-tag"></i> Product ID</label>
         <input type="text" id="node-config-input-productID" placeholder="Product ID">
