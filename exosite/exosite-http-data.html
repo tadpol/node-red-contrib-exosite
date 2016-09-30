@@ -46,7 +46,7 @@
         defaults: {
             name: {value:""},
             alias: {value:""},
-            device: {value:"", type: "exo-config-client"},
+            device: {value:"", type: "exo-config-client",required:true},
         },
         credentials: {
             cik: {type:"password"}
@@ -78,7 +78,7 @@
         color: '#a6bbcf',
         defaults: {
             name: {value:""},
-            device: {value:"", type: "exo-config-client"},
+            device: {value:"", type: "exo-config-client",required:true},
         },
         credentials: {
             cik: {type:"password"}
@@ -103,6 +103,24 @@
                 $('#node-input-cik-row').show();
             }
         }
+    });
+    RED.nodes.registerType('exo-watch-client',{
+        category: 'input',
+        color: '#a6bbcf',
+        defaults: {
+            name: {value:""},
+            device: {value:"", type: "exo-config-client",required:true},
+            alias: {value:"",required:true},
+        },
+        inputs:0,
+        outputs:1,
+        icon: "exosite.png",
+        label: function() {
+            return this.name||"exo-watch-client";
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
+        },
     });
 </script>
 
@@ -157,7 +175,7 @@ it to take advantage of its local proxying.</p>
 </script>
 
 <script type="text/x-red" data-help-name="exo-write-client">
-    <p>A node that will write to a CIK on Exosite.</p>
+    <p>A node that will write to a device on Exosite.</p>
     <p>If payload is a string or number, writes it to the specified alias.</p>
     <p>If payload is an object, the keys are the aliases and values are written</p>
 </script>
@@ -179,9 +197,27 @@ it to take advantage of its local proxying.</p>
 </script>
 
 <script type="text/x-red" data-help-name="exo-read-client">
-    <p>A node that will read aliases from a CIK on Exosite.</p>
+    <p>A node that will read aliases from a device on Exosite.</p>
     <p>Requires an incoming message to have a payload that is the aliases to read.</p>
 </script>
 
+<script type="text/x-red" data-template-name="exo-watch-client">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-device"><i class="fa fa-cube"></i> Device</label>
+        <input type="text" id="node-input-device">
+    </div>
+    <div class="form-row">
+        <label for="node-input-alias"><i class="fa fa-circle-o"></i> Alias</label>
+        <input type="text" id="node-input-alias" placeholder="alias">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="exo-watch-client">
+    <p>A node that will watch an alias from a device on Exosite.</p>
+</script>
 <!--  vim: set ai et sw=4 ts=4 : -->
 

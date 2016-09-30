@@ -269,16 +269,16 @@ module.exports = function(RED) {
 	function ExositeWatchClient(config) {
 		RED.nodes.createNode(this,config);
 		var node = this;
+		node.running = true;
 
 		// Setup and watch
 		function doRead(opts) {
 			opts.method = 'GET';
 			opts.headers['Request-Timeout'] = "300000";
-			opts.query = ?;
-			opts.path = opts.path + '?' + ?;
+			opts.query = config.alias;
+			opts.path = opts.path + '?' + config.alias;
 
-			// TODO: save this somewhere so we can cancel it.
-			var req = https.request(opts, function(result){
+			node.req = https.request(opts, function(result){
 				var allData = '';
 				result.on('data', function (chunk) {
 					if (allData == '') {
@@ -287,26 +287,44 @@ module.exports = function(RED) {
 					allData = allData + chunk;
 				});
 				result.on('end',function() {
-					msg.payload = querystring.parse(allData);
-					node.send(msg);
+					if (allData != '') {
+						var msg = {};
+						msg.payload = querystring.parse(allData);
+						node.send(msg);
+					}
 					node.status({});
-					// TODO: Call doRead again.
+					setTimeout( function() { node.emit("input",{}); }, 100 );
 				});
 			});
-			req.on('error',function(err) {
+			node.req.on('error',function(err) {
 				msg.payload = err.toString();
 				msg.statusCode = err.code;
 				node.send(msg);
 				node.status({fill:"red",shape:"ring",text:err.code});
 			});
-			req.end();
+			node.req.end();
 		}
 
+		this.on('input', function(msg) {
+			if (node.running) {
+				var device = RED.nodes.getNode(config.device);
+				if (device) {
+					device.configuredOptions(node, doRead);
+				}
+			}
+		});
 
 		this.on('close', function(msg) {
-			// TODO: cancel all the things.
+			node.running = false;
+			if (node.req != nil) {
+				node.req.abort();
+			}
 		});
+
+		// Start it up.
+		node.emit("input",{});
 	}
+	RED.nodes.registerType("exo-watch-client", ExositeWatchClient, {});
 }
 
 /*	vim: set cin sw=4 ts=4 : */
