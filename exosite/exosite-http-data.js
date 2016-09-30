@@ -11,6 +11,7 @@ module.exports = function(RED) {
 	try {
 		fs.statSync("gwe"); // FIXME: set to correct path
 		hasGWE = true;
+		// TODO: call `gwe --gateway-cik`
 	} catch(err) {
 		hasGWE = false;
 		//throw "Info : Gateway Engine not presenet.";
@@ -37,19 +38,64 @@ module.exports = function(RED) {
 		RED.nodes.createNode(this,config);
 		this.productID = config.productID;
 		this.serialNumber = config.serialNumber;
+		this.connectBy = config.connectBy;
 
-		this.cik = function() {}
+		this.host = function() {
+			if (this.connectBy == "GWE") {
+				return "localhost";
+			} else if (this.connectBy == "GMQ") {
+				return "localhost";
+			} else {
+				return this.productID + ".m2.exosite.com";
+			}
+		}
 
-		// TODO: if no CIK, then call POST /provision/activate
-		/*
-		 * There are three kinds
-		 * - productID+SN to Exosite.
-		 *   - Needs to call POST {pid}.m2…/provision/activate
-		 * - productID+SN to GMQ (localhost)
-		 *   - Needs to call POST localhost/provision/activate
-		 * - aliases on GWE device.
-		 *   - Needs to sh %{gwe --gateway-cik}
-		 */
+		this.configuredOptions = function(node, callback) {
+			var Ropts = urllib.parse('https://'+this.host()+'/onep:v1/stack/alias');
+			Ropts.headers = {};
+			Ropts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
+			if (this.credentials.cik != null && this.credentials.cik != "") {
+				Ropts.headers['X-Exosite-CIK'] = this.credentials.cik;
+
+				callback(Ropts);
+				return;
+			}
+			// Not yet, Need to activate.
+			node.status({fill:"blue",shape:"ring",text:"activating"});
+			node.log("Going to activate "+this.productID+"; " + this.serialNumber);
+			var opts = urllib.parse('https://'+this.host()+'/provision/activate')
+			opts.method = 'POST';
+			opts.headers = {};
+			opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
+			var payload = querystring.stringify({
+				vendor = this.productID,
+				model = this.productID,
+				sn = this.serialNumber
+			});
+			opts.headers['content-length'] = Buffer.byteLength(payload);
+
+			var recievedCIK = "";
+			var req = https.request(opts, function(result){
+				result.on('data', function (chunk) {
+					recievedCIK = recievedCIK + chunk;
+				});
+				result.on('end',function() {
+					node.status({});
+					this.credentials.cik = recievedCIK;
+					Ropts.headers['X-Exosite-CIK'] = this.credentials.cik;
+					callback(Ropts);
+				});
+			});
+			req.on('error',function(err) {
+				msg.payload = err.toString();
+				msg.statusCode = err.code;
+				node.send(msg);
+				node.status({fill:"red",shape:"ring",text:err.code});
+			});
+			req.write(payload);
+			req.end();
+		}
+
 	}
 
 	RED.nodes.registerType("exo-config-client", ExositeConfigureClient, {
@@ -63,59 +109,62 @@ module.exports = function(RED) {
 		RED.nodes.createNode(this,config);
 		var node = this;
 		this.on('input', function(msg) {
-			node.status({fill:"blue",shape:"dot",text:"writing"});
+			function doWrite(opts) {
+				node.status({fill:"blue",shape:"dot",text:"writing"});
+				opts.method = 'POST';
+				var payload;
+				if (typeof(msg.payload) === 'string') {
+					if (config.alias != null && config.alias != '') {
+						var f={};
+						f[config.alias] = msg.payload;
+						payload = querystring.stringify(f);
+					} else {
+						payload = msg.payload;
+					}
+				} else if (typeof msg.payload === "number") {
+					if (config.alias != null && config.alias != '') {
+						var f={};
+						f[config.alias] = msg.payload+"";
+						payload = querystring.stringify(f);
+					} else {
+						// this will fail.
+						payload = msg.payload+"";
+						// FIXME: log an error (status will be updated when call errors)
+					}
+				} else {
+					payload = querystring.stringify(msg.payload);
+				}
+				opts.headers['content-length'] = Buffer.byteLength(payload);
 
-			var productID = "";
+				var req = https.request(opts, function(result){
+					result.on('data', function (chunk) {});
+					result.on('end',function() {
+						node.status({});
+					});
+				});
+				req.on('error',function(err) {
+					msg.payload = err.toString();
+					msg.statusCode = err.code;
+					node.send(msg);
+					node.status({fill:"red",shape:"ring",text:err.code});
+				});
+				req.write(payload);
+				req.end();
+			}
+
+
 			var device = RED.nodes.getNode(config.device);
 			if (device) {
-				this.credentials.cik = device.credentials.cik;
-				productID = device.productID + ".";
-			}
-
-			var opts = urllib.parse('https://'+productID+'m2.exosite.com/onep:v1/stack/alias');
-			opts.method = 'POST';
-			opts.headers = {};
-			opts.headers['X-Exosite-CIK'] = this.credentials.cik;
-			opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
-
-			var payload;
-			if (typeof(msg.payload) === 'string') {
-				if (config.alias != null && config.alias != '') {
-					var f={};
-					f[config.alias] = msg.payload;
-					payload = querystring.stringify(f);
-				} else {
-					payload = msg.payload;
-				}
-			} else if (typeof msg.payload === "number") {
-				if (config.alias != null && config.alias != '') {
-					var f={};
-					f[config.alias] = msg.payload+"";
-					payload = querystring.stringify(f);
-				} else {
-					// this will fail.
-					payload = msg.payload+"";
-					// FIXME: log an error (status will be updated when call errors)
-				}
+				device.configuredOptions(doWrite);
 			} else {
-				payload = querystring.stringify(msg.payload);
+				// Old style
+				var opts = urllib.parse('https://'+productID+'m2.exosite.com/onep:v1/stack/alias');
+				opts.headers = {};
+				opts.headers['X-Exosite-CIK'] = this.credentials.cik;
+				opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
+				doWrite(opts);
 			}
-			opts.headers['content-length'] = Buffer.byteLength(payload);
 
-			var req = https.request(opts, function(result){
-				result.on('data', function (chunk) {});
-				result.on('end',function() {
-					node.status({});
-				});
-			});
-			req.on('error',function(err) {
-				msg.payload = err.toString();
-				msg.statusCode = err.code;
-				node.send(msg);
-				node.status({fill:"red",shape:"ring",text:err.code});
-			});
-			req.write(payload);
-			req.end();
 		});
 	}
 	RED.nodes.registerType("exo-write-client", ExositeWriteClient, {
@@ -134,7 +183,7 @@ module.exports = function(RED) {
 			var productID = "";
 			var device = RED.nodes.getNode(config.device);
 			if (device) {
-				this.credentials.cik = device.credentials.cik;
+				this.credentials.cik = device.credentials.cik; // XXX
 				productID = device.productID + ".";
 			}
 
