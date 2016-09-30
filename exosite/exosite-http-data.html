@@ -108,7 +108,7 @@
 
 <script type="text/x-red" data-template-name="exo-config-client">
     <div class="form-row">
-        <label for=""><i class="fa fa-repeat"></i> Using</label>
+        <label for=""><i class="fa fa-tasks"></i> Using</label>
         <select id="node-config-input-connectBy">
             <option value="Direct">Direct</option>
             <option value="GWE">GWE</option>
@@ -124,6 +124,17 @@
         <label for="node-config-input-serialNumber"><i class="fa fa-circle-o"></i> Serial Number</label>
         <input type="text" id="node-config-input-serialNumber" placeholder="Serial Number">
     </div>
+</script>
+<script type="text/x-red" data-help-name="exo-config-client">
+<p>Configures a device by product ID and serial number.  Before any reads or
+writes, this will activate the serial number first.  So you must enable the serial
+number. (`mr product enable <sn>` or from the Murano web UI).</p>
+
+<p>If Gateway Engine (GWE) is installed, you can write to aliases on its
+device.</p>
+
+<p>If Gateway Message Queuing (GMQ) is installed, then data can be routed through
+it to take advantage of its local proxying.</p>
 </script>
 
 <script type="text/x-red" data-template-name="exo-write-client">
