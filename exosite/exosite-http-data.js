@@ -3,8 +3,8 @@ module.exports = function(RED) {
 	var https = require("follow-redirects").https;
 	var urllib = require("url");
 	var querystring = require("querystring");
-    var fs = require('fs');
-    var exec = require('child_process').exec;
+	var fs = require('fs');
+	var exec = require('child_process').exec;
 
 	/**********************************************************************/
 	var hasGWE = false;
@@ -24,11 +24,11 @@ module.exports = function(RED) {
 		}
 	}
 
-    RED.httpAdmin.get('/exosite-config-features',
+	RED.httpAdmin.get('/exosite-config-features',
 		RED.auth.needsPermission('exosite-config-features.read'),
 		function(req,res) {
-        res.json({"GWE":hasGWE, "GMQ":hasGMQ});
-    });
+		res.json({"GWE":hasGWE, "GMQ":hasGMQ});
+	});
 
 	/**********************************************************************/
 	function ExositeConfigureClient(config) {
