@@ -3,6 +3,34 @@ module.exports = function(RED) {
 	var https = require("follow-redirects").https;
 	var urllib = require("url");
 	var querystring = require("querystring");
+    var fs = require('fs');
+
+	/**********************************************************************/
+	var hasGWE = false;
+	var hasGMQ = false;
+	try {
+		fs.statSync("gwe"); // FIXME: set to correct path
+		hasGWE = true;
+	} catch(err) {
+		hasGWE = false;
+		//throw "Info : Gateway Engine not presenet.";
+		//if we throw, nothing below runs.
+	}
+	if (hasGWE) {
+		try {
+			fs.statSync("gmq"); // FIXME: set to correct path
+			hasGMQ = true;
+		} catch(err) {
+			hasGMQ = false;
+			//throw "Info : Gateway Message Queueing not presenet.";
+		}
+	}
+
+    RED.httpAdmin.get('/exosite-config-features',
+		RED.auth.needsPermission('exosite-config-features.read'),
+		function(req,res) {
+        res.json({"GWE":hasGWE, "GMQ":hasGMQ});
+    });
 
 	/**********************************************************************/
 	function ExositeConfigureClient(config) {

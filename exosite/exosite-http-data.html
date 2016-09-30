@@ -19,6 +19,16 @@
             return this.productID?"node_label_italic":"";
         },
         oneditprepare: function() {
+            $.getJSON('exosite-config-features', function(data){
+                if (!data.GMQ) {
+                    $('#node-config-input-connectBy option[value="GMQ"]').attr('disabled', 'disabled');
+                    $('#node-config-input-connectBy option[value="GMQ"]').text("GMQ not installed");
+                }
+                if (!data.GWE) {
+                    $('#node-config-input-connectBy option[value="GWE"]').attr('disabled', 'disabled');
+                    $('#node-config-input-connectBy option[value="GWE"]').text("GWE not installed");
+                }
+            });
             $("#node-config-input-connectBy").change(function() {
                 var id = $("#node-config-input-connectBy").val();
                 if (id == "GWE") {
