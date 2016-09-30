@@ -4,6 +4,7 @@ module.exports = function(RED) {
 	var urllib = require("url");
 	var querystring = require("querystring");
     var fs = require('fs');
+    var exec = require('child_process').exec;
 
 	/**********************************************************************/
 	var hasGWE = false;
@@ -11,7 +12,6 @@ module.exports = function(RED) {
 	try {
 		fs.statSync("/usr/local/bin/gwe");
 		hasGWE = true;
-		// TODO: call `gwe --gateway-cik` ?here or in config?
 	} catch(err) {
 		hasGWE = false;
 	}
@@ -51,46 +51,74 @@ module.exports = function(RED) {
 			Ropts.headers = {};
 			Ropts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
 			Ropts.headers['Accept'] = 'application/x-www-form-urlencoded; charset=utf-8';
-			if (cfgNode.credentials.cik != null && cfgNode.credentials.cik != "") {
-				Ropts.headers['X-Exosite-CIK'] = cfgNode.credentials.cik;
 
+			if (hasGMQ && cfgNode.connectBy == "GMQ") {
+				Ropts.headers['X-Exosite-VMS'] = cfgNode.productID + " " + cfgNode.productID + " " + cfgNode.serialNumber;
 				callback(Ropts);
-				return;
-			}
-			// Not yet, Need to activate.
-			node.status({fill:"blue",shape:"ring",text:"activating"});
-			node.log("Going to activate "+cfgNode.productID+"; " + cfgNode.serialNumber);
-			var opts = urllib.parse('https://'+cfgNode.host()+'/provision/activate')
-			opts.method = 'POST';
-			opts.headers = {};
-			opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
-			var payload = querystring.stringify({
-				vendor: cfgNode.productID,
-				model: cfgNode.productID,
-				sn: cfgNode.serialNumber
-			});
-			opts.headers['content-length'] = Buffer.byteLength(payload);
 
-			var recievedCIK = "";
-			var req = https.request(opts, function(result){
-				result.on('data', function (chunk) {
-					recievedCIK = recievedCIK + chunk;
+			} else if (cfgNode.credentials.cik != null && cfgNode.credentials.cik != "") {
+				Ropts.headers['X-Exosite-CIK'] = cfgNode.credentials.cik;
+				callback(Ropts);
+
+			} else if (hasGWE && cfgNode.connectBy == "GWE") {
+				node.status({fill:"blue",shape:"ring",text:"activating"});
+				node.log("Fetching the GWE CIK");
+				exec("/usr/local/bin/gwe --gateway-cik", function(err,stdout,stderr) {
+					if (err) {
+						RED.log.info("Failed to fetch Gateway's CIK");
+						node.status({fill:"red",shape:"ring",text:"Failed to fetch CIK"});
+					}
+					else {
+						try {
+							var info = stdout.trim();
+							cfgNode.credentials.cik = info;
+							Ropts.headers['X-Exosite-CIK'] = cfgNode.credentials.cik;
+							node.status({});
+							callback(Ropts);
+						}
+						catch(e) {
+							RED.log.info("Failed to parse CIK",stdout.trim());
+							node.status({fill:"red",shape:"ring",text:"Failed to parse CIK"});
+						}
+					}
 				});
-				result.on('end',function() {
-					node.status({});
-					cfgNode.credentials.cik = recievedCIK;
-					Ropts.headers['X-Exosite-CIK'] = cfgNode.credentials.cik;
-					callback(Ropts);
+
+			} else {
+				// Not yet, Need to activate.
+				node.status({fill:"blue",shape:"ring",text:"activating"});
+				node.log("Going to activate "+cfgNode.productID+"; " + cfgNode.serialNumber);
+				var opts = urllib.parse('https://'+cfgNode.host()+'/provision/activate')
+				opts.method = 'POST';
+				opts.headers = {};
+				opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
+				var payload = querystring.stringify({
+					vendor: cfgNode.productID,
+					model: cfgNode.productID,
+					sn: cfgNode.serialNumber
 				});
-			});
-			req.on('error',function(err) {
-				msg.payload = err.toString();
-				msg.statusCode = err.code;
-				node.send(msg);
-				node.status({fill:"red",shape:"ring",text:err.code});
-			});
-			req.write(payload);
-			req.end();
+				opts.headers['content-length'] = Buffer.byteLength(payload);
+
+				var recievedCIK = "";
+				var req = https.request(opts, function(result){
+					result.on('data', function (chunk) {
+						recievedCIK = recievedCIK + chunk;
+					});
+					result.on('end',function() {
+						node.status({});
+						cfgNode.credentials.cik = recievedCIK;
+						Ropts.headers['X-Exosite-CIK'] = cfgNode.credentials.cik;
+						callback(Ropts);
+					});
+				});
+				req.on('error',function(err) {
+					msg.payload = err.toString();
+					msg.statusCode = err.code;
+					node.send(msg);
+					node.status({fill:"red",shape:"ring",text:err.code});
+				});
+				req.write(payload);
+				req.end();
+			}
 		}
 
 	}
@@ -238,6 +266,12 @@ module.exports = function(RED) {
 
 	/**********************************************************************/
 	// TODO: add 'exo watch' which does a Long-Poll on a device & aliases.
+	function ExositeWatchClient(config) {
+		RED.nodes.createNode(this,config);
+		var node = this;
+		this.on('input', function(msg) {
+		});
+	}
 }
 
 /*	vim: set cin sw=4 ts=4 : */
