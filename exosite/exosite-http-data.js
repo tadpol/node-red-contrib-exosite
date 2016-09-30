@@ -50,6 +50,7 @@ module.exports = function(RED) {
 			var Ropts = urllib.parse('https://'+cfgNode.host()+'/onep:v1/stack/alias');
 			Ropts.headers = {};
 			Ropts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
+			Ropts.headers['Accept'] = 'application/x-www-form-urlencoded; charset=utf-8';
 			if (cfgNode.credentials.cik != null && cfgNode.credentials.cik != "") {
 				Ropts.headers['X-Exosite-CIK'] = cfgNode.credentials.cik;
 
@@ -224,6 +225,7 @@ module.exports = function(RED) {
 				opts.headers = {};
 				opts.headers['X-Exosite-CIK'] = this.credentials.cik;
 				opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
+				opts.headers['Accept'] = 'application/x-www-form-urlencoded; charset=utf-8';
 				doRead(opts);
 			}
 		});
