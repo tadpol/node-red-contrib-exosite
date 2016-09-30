@@ -9,21 +9,18 @@ module.exports = function(RED) {
 	var hasGWE = false;
 	var hasGMQ = false;
 	try {
-		fs.statSync("gwe"); // FIXME: set to correct path
+		fs.statSync("/usr/local/bin/gwe");
 		hasGWE = true;
-		// TODO: call `gwe --gateway-cik`
+		// TODO: call `gwe --gateway-cik` ?here or in config?
 	} catch(err) {
 		hasGWE = false;
-		//throw "Info : Gateway Engine not presenet.";
-		//if we throw, nothing below runs.
 	}
 	if (hasGWE) {
 		try {
-			fs.statSync("gmq"); // FIXME: set to correct path
+			fs.statSync("/usr/local/bin/gmq");
 			hasGMQ = true;
 		} catch(err) {
 			hasGMQ = false;
-			//throw "Info : Gateway Message Queueing not presenet.";
 		}
 	}
 
