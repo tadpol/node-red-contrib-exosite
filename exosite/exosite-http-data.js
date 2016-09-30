@@ -264,14 +264,6 @@ module.exports = function(RED) {
 		}
 	});
 
-	/**********************************************************************/
-	// TODO: add 'exo watch' which does a Long-Poll on a device & aliases.
-	function ExositeWatchClient(config) {
-		RED.nodes.createNode(this,config);
-		var node = this;
-		this.on('input', function(msg) {
-		});
-	}
 }
 
 /*	vim: set cin sw=4 ts=4 : */
