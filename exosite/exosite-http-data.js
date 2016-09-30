@@ -174,57 +174,58 @@ module.exports = function(RED) {
 		RED.nodes.createNode(this,config);
 		var node = this;
 		this.on('input', function(msg) {
-			node.status({fill:"blue",shape:"dot",text:"reading"});
+			function doRead(opts) {
+				node.status({fill:"blue",shape:"dot",text:"reading"});
+				opts.method = 'GET';
+				var payload;
+				if (typeof(msg.payload) === 'string' || typeof msg.payload === "number") {
+					payload = msg.payload + '';
+				} else {
+					if ( msg.payload.length ) {
+						payload = msg.payload;
+					} else {
+						payload = [];
+						for (var key in msg.payload) {
+							payload.push(key);
+						}
+					}
+					payload = payload.join('&');
+				}
+				opts.query = payload;
+				opts.path = opts.path + '?' + payload;
 
-			var productID = "";
+				//node.log(JSON.stringify(opts));
+				var req = https.request(opts, function(result){
+					var allData = '';
+					result.on('data', function (chunk) {
+						allData = allData + chunk;
+					});
+					result.on('end',function() {
+						msg.payload = querystring.parse(allData);
+						node.send(msg);
+						node.status({});
+					});
+				});
+				req.on('error',function(err) {
+					msg.payload = err.toString();
+					msg.statusCode = err.code;
+					node.send(msg);
+					node.status({fill:"red",shape:"ring",text:err.code});
+				});
+				req.end();
+			}
+
 			var device = RED.nodes.getNode(config.device);
 			if (device) {
-				this.credentials.cik = device.credentials.cik; // XXX
-				productID = device.productID + ".";
-			}
-
-			var opts = urllib.parse('https://'+productID+'m2.exosite.com/onep:v1/stack/alias');
-			opts.method = 'GET';
-			opts.headers = {};
-			opts.headers['X-Exosite-CIK'] = this.credentials.cik;
-			opts.headers['Accept'] = 'application/x-www-form-urlencoded; charset=utf-8';
-
-			var payload;
-			if (typeof(msg.payload) === 'string' || typeof msg.payload === "number") {
-				payload = msg.payload + '';
+				device.configuredOptions(node, doRead);
 			} else {
-				if ( msg.payload.length ) {
-					payload = msg.payload;
-				} else {
-					payload = [];
-					for (var key in msg.payload) {
-						payload.push(key);
-					}
-				}
-				payload = payload.join('&');
+				// Old style
+				var opts = urllib.parse('https://'+productID+'m2.exosite.com/onep:v1/stack/alias');
+				opts.headers = {};
+				opts.headers['X-Exosite-CIK'] = this.credentials.cik;
+				opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
+				doRead(opts);
 			}
-			opts.query = payload;
-			opts.path = opts.path + '?' + payload;
-
-			//node.log(JSON.stringify(opts));
-			var req = https.request(opts, function(result){
-				var allData = '';
-				result.on('data', function (chunk) {
-					allData = allData + chunk;
-				});
-				result.on('end',function() {
-					msg.payload = querystring.parse(allData);
-					node.send(msg);
-					node.status({});
-				});
-			});
-			req.on('error',function(err) {
-				msg.payload = err.toString();
-				msg.statusCode = err.code;
-				node.send(msg);
-				node.status({fill:"red",shape:"ring",text:err.code});
-			});
-			req.end();
 		});
 	}
 	RED.nodes.registerType("exo-read-client", ExositeReadClient, {
