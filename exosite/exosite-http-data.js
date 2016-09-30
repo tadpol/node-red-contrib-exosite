@@ -269,7 +269,42 @@ module.exports = function(RED) {
 	function ExositeWatchClient(config) {
 		RED.nodes.createNode(this,config);
 		var node = this;
-		this.on('input', function(msg) {
+
+		// Setup and watch
+		function doRead(opts) {
+			opts.method = 'GET';
+			opts.headers['Request-Timeout'] = "300000";
+			opts.query = ?;
+			opts.path = opts.path + '?' + ?;
+
+			// TODO: save this somewhere so we can cancel it.
+			var req = https.request(opts, function(result){
+				var allData = '';
+				result.on('data', function (chunk) {
+					if (allData == '') {
+						node.status({fill:"blue",shape:"dot",text:"reading"});
+					}
+					allData = allData + chunk;
+				});
+				result.on('end',function() {
+					msg.payload = querystring.parse(allData);
+					node.send(msg);
+					node.status({});
+					// TODO: Call doRead again.
+				});
+			});
+			req.on('error',function(err) {
+				msg.payload = err.toString();
+				msg.statusCode = err.code;
+				node.send(msg);
+				node.status({fill:"red",shape:"ring",text:err.code});
+			});
+			req.end();
+		}
+
+
+		this.on('close', function(msg) {
+			// TODO: cancel all the things.
 		});
 	}
 }
