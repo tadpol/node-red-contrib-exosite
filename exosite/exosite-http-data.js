@@ -33,41 +33,40 @@ module.exports = function(RED) {
 	/**********************************************************************/
 	function ExositeConfigureClient(config) {
 		RED.nodes.createNode(this,config);
+		var cfgNode = this;
 		this.productID = config.productID;
 		this.serialNumber = config.serialNumber;
 		this.connectBy = config.connectBy;
 
 		this.host = function() {
-			if (this.connectBy == "GWE") {
-				return "localhost";
-			} else if (this.connectBy == "GMQ") {
-				return "localhost";
+			if (cfgNode.connectBy == "GWE" || cfgNode.connectBy == "GMQ") {
+				return "localhost:8090";
 			} else {
-				return this.productID + ".m2.exosite.com";
+				return cfgNode.productID + ".m2.exosite.com";
 			}
 		}
 
 		this.configuredOptions = function(node, callback) {
-			var Ropts = urllib.parse('https://'+this.host()+'/onep:v1/stack/alias');
+			var Ropts = urllib.parse('https://'+cfgNode.host()+'/onep:v1/stack/alias');
 			Ropts.headers = {};
 			Ropts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
-			if (this.credentials.cik != null && this.credentials.cik != "") {
-				Ropts.headers['X-Exosite-CIK'] = this.credentials.cik;
+			if (cfgNode.credentials.cik != null && cfgNode.credentials.cik != "") {
+				Ropts.headers['X-Exosite-CIK'] = cfgNode.credentials.cik;
 
 				callback(Ropts);
 				return;
 			}
 			// Not yet, Need to activate.
 			node.status({fill:"blue",shape:"ring",text:"activating"});
-			node.log("Going to activate "+this.productID+"; " + this.serialNumber);
-			var opts = urllib.parse('https://'+this.host()+'/provision/activate')
+			node.log("Going to activate "+cfgNode.productID+"; " + cfgNode.serialNumber);
+			var opts = urllib.parse('https://'+cfgNode.host()+'/provision/activate')
 			opts.method = 'POST';
 			opts.headers = {};
 			opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
 			var payload = querystring.stringify({
-				vendor = this.productID,
-				model = this.productID,
-				sn = this.serialNumber
+				vendor: cfgNode.productID,
+				model: cfgNode.productID,
+				sn: cfgNode.serialNumber
 			});
 			opts.headers['content-length'] = Buffer.byteLength(payload);
 
@@ -78,8 +77,8 @@ module.exports = function(RED) {
 				});
 				result.on('end',function() {
 					node.status({});
-					this.credentials.cik = recievedCIK;
-					Ropts.headers['X-Exosite-CIK'] = this.credentials.cik;
+					cfgNode.credentials.cik = recievedCIK;
+					Ropts.headers['X-Exosite-CIK'] = cfgNode.credentials.cik;
 					callback(Ropts);
 				});
 			});
@@ -152,7 +151,7 @@ module.exports = function(RED) {
 
 			var device = RED.nodes.getNode(config.device);
 			if (device) {
-				device.configuredOptions(doWrite);
+				device.configuredOptions(node, doWrite);
 			} else {
 				// Old style
 				var opts = urllib.parse('https://'+productID+'m2.exosite.com/onep:v1/stack/alias');
