@@ -13,6 +13,9 @@
         align: 'right',
         icon: "exosite.png",
         label: function() {
+            if (this.connectBy == 'GWE') {
+                return "GWE";
+            }
             return (this.productID+"; "+this.serialNumber)||"exo-config-client";
         },
         labelStyle: function() {
@@ -139,7 +142,7 @@
         <input type="text" id="node-config-input-productID" placeholder="Product ID">
     </div>
     <div class="form-row exo-config-row">
-        <label for="node-config-input-serialNumber"><i class="fa fa-circle-o"></i> Serial Number</label>
+        <label for="node-config-input-serialNumber"><i class="fa fa-server"></i> Serial Number</label>
         <input type="text" id="node-config-input-serialNumber" placeholder="Serial Number">
     </div>
 </script>
