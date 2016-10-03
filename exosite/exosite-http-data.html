@@ -1,10 +1,59 @@
 <script type="text/javascript">
+    RED.nodes.registerType('exo-config-client',{
+        category: 'config',
+        color: '#a6bbcf',
+        defaults: {
+            productID: {value:""},
+            serialNumber: {value:""},
+            connectBy: {value:"Direct", required:true},
+        },
+        credentials: {
+            cik: {type:"password"}
+        },
+        align: 'right',
+        icon: "exosite.png",
+        label: function() {
+            if (this.connectBy == 'GWE') {
+                return "GWE";
+            } else if (this.connectBy == 'GMQ') {
+                return "GMQ=> " + this.productID + "; " + this.serialNumber;
+            } else if (this.productID && this.serialNumber) {
+                return this.productID + "; " + this.serialNumber;
+            }
+            return "exo-config-client";
+        },
+        labelStyle: function() {
+            return this.productID?"node_label_italic":"";
+        },
+        oneditprepare: function() {
+            $.getJSON('exosite-config-features', function(data){
+                if (!data.GMQ) {
+                    $('#node-config-input-connectBy option[value="GMQ"]').attr('disabled', 'disabled');
+                    $('#node-config-input-connectBy option[value="GMQ"]').text("GMQ not installed");
+                }
+                if (!data.GWE) {
+                    $('#node-config-input-connectBy option[value="GWE"]').attr('disabled', 'disabled');
+                    $('#node-config-input-connectBy option[value="GWE"]').text("GWE not installed");
+                }
+            });
+            $("#node-config-input-connectBy").change(function() {
+                var id = $("#node-config-input-connectBy").val();
+                if (id == "GWE") {
+                    $('.exo-config-row').hide();
+                } else {
+                    $('.exo-config-row').show();
+                }
+            });
+            $('#node-config-input-connectBy').change();
+        },
+    });
     RED.nodes.registerType('exo-write-client',{
         category: 'output',
         color: '#a6bbcf',
         defaults: {
             name: {value:""},
             alias: {value:""},
+            device: {value:"", type: "exo-config-client",required:true},
         },
         credentials: {
             cik: {type:"password"}
@@ -14,10 +63,21 @@
         align: 'right',
         icon: "exosite.png",
         label: function() {
-            return this.name||"exo-write-client";
+            return this.name||"exo-write";
         },
         labelStyle: function() {
             return this.name?"node_label_italic":"";
+        },
+        oneditprepare: function() {
+            // If CIK exists, show CIK field.  Otherwise hide it.
+            // Going forward it should not be used.
+            // So we're just keeping it around for backwards support.
+            var cik = $('#node-input-cik').val();
+            if (cik == null || cik == '') {
+                $('#node-input-cik-row').hide();
+            } else {
+                $('#node-input-cik-row').show();
+            }
         }
     });
     RED.nodes.registerType('exo-read-client',{
@@ -25,6 +85,7 @@
         color: '#a6bbcf',
         defaults: {
             name: {value:""},
+            device: {value:"", type: "exo-config-client",required:true},
         },
         credentials: {
             cik: {type:"password"}
@@ -33,12 +94,72 @@
         outputs:1,
         icon: "exosite.png",
         label: function() {
-            return this.name||"exo-read-client";
+            return this.name||"exo-read";
         },
         labelStyle: function() {
             return this.name?"node_label_italic":"";
+        },
+        oneditprepare: function() {
+            // If CIK exists, show CIK field.  Otherwise hide it.
+            // Going forward it should not be used.
+            // So we're just keeping it around for backwards support.
+            var cik = $('#node-input-cik').val();
+            if (cik == null || cik == '') {
+                $('#node-input-cik-row').hide();
+            } else {
+                $('#node-input-cik-row').show();
+            }
         }
     });
+    RED.nodes.registerType('exo-watch-client',{
+        category: 'input',
+        color: '#a6bbcf',
+        defaults: {
+            name: {value:""},
+            device: {value:"", type: "exo-config-client",required:true},
+            alias: {value:"",required:true},
+        },
+        inputs:0,
+        outputs:1,
+        icon: "exosite.png",
+        label: function() {
+            return this.name||"exo-watch";
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
+        },
+    });
+</script>
+
+<script type="text/x-red" data-template-name="exo-config-client">
+    <div class="form-row">
+        <label for=""><i class="fa fa-tasks"></i> Using</label>
+        <select id="node-config-input-connectBy">
+            <option value="Direct">Direct</option>
+            <option value="GWE">GWE</option>
+            <option value="GMQ">GMQ</option>
+        </select>
+    </div>
+
+    <div class="form-row exo-config-row">
+        <label for="node-config-input-productID"><i class="fa fa-tag"></i> Product ID</label>
+        <input type="text" id="node-config-input-productID" placeholder="Product ID">
+    </div>
+    <div class="form-row exo-config-row">
+        <label for="node-config-input-serialNumber"><i class="fa fa-server"></i> Serial Number</label>
+        <input type="text" id="node-config-input-serialNumber" placeholder="Serial Number">
+    </div>
+</script>
+<script type="text/x-red" data-help-name="exo-config-client">
+<p>Configures a device by product ID and serial number.  Before any reads or
+writes, this will activate the serial number first.  So you must enable the serial
+number. (`mr product enable <sn>` or from the Murano web UI).</p>
+
+<p>If Gateway Engine (GWE) is installed, you can write to aliases on its
+device.</p>
+
+<p>If Gateway Message Queuing (GMQ) is installed, then data can be routed through
+it to take advantage of its local proxying.</p>
 </script>
 
 <script type="text/x-red" data-template-name="exo-write-client">
@@ -46,7 +167,11 @@
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
-    <div class="form-row node-input-useAuth-row">
+    <div class="form-row">
+        <label for="node-input-device"><i class="fa fa-cube"></i> Device</label>
+        <input type="text" id="node-input-device">
+    </div>
+    <div class="form-row node-input-useAuth-row" id="node-input-cik-row">
         <label for="node-input-cik"><i class="fa fa-lock"></i> CIK</label>
         <input type="password" id="node-input-cik">
     </div>
@@ -57,31 +182,49 @@
 </script>
 
 <script type="text/x-red" data-help-name="exo-write-client">
-    <p>A node that will write to a CIK on Exosite.</p>
+    <p>A node that will write to a device on Exosite.</p>
     <p>If payload is a string or number, writes it to the specified alias.</p>
     <p>If payload is an object, the keys are the aliases and values are written</p>
 </script>
 
-
-<script type="text/x-red" data-help-name="exo-write-client">
-    <p>A node that will write to a CIK on Exosite.</p>
-</script>
 
 <script type="text/x-red" data-template-name="exo-read-client">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
-    <div class="form-row node-input-useAuth-row">
+    <div class="form-row">
+        <label for="node-input-device"><i class="fa fa-cube"></i> Device</label>
+        <input type="text" id="node-input-device">
+    </div>
+    <div class="form-row node-input-useAuth-row" id="node-input-cik-row">
         <label for="node-input-cik"><i class="fa fa-lock"></i> CIK</label>
         <input type="password" id="node-input-cik">
     </div>
 </script>
 
 <script type="text/x-red" data-help-name="exo-read-client">
-    <p>A node that will read aliases from a CIK on Exosite.</p>
+    <p>A node that will read aliases from a device on Exosite.</p>
     <p>Requires an incoming message to have a payload that is the aliases to read.</p>
 </script>
 
+<script type="text/x-red" data-template-name="exo-watch-client">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-device"><i class="fa fa-cube"></i> Device</label>
+        <input type="text" id="node-input-device">
+    </div>
+    <div class="form-row">
+        <label for="node-input-alias"><i class="fa fa-circle-o"></i> Alias</label>
+        <input type="text" id="node-input-alias" placeholder="alias">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="exo-watch-client">
+    <p>A node that will watch an alias from a device on Exosite.</p>
+</script>
 <!--  vim: set ai et sw=4 ts=4 : -->
 
