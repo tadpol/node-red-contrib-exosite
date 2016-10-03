@@ -318,7 +318,13 @@ module.exports = function(RED) {
 			if (node.running) {
 				var device = RED.nodes.getNode(config.device);
 				if (device) {
-					device.configuredOptions(node, doRead);
+					if (device.connectBy != "Direct") {
+						node.error("Watch only works with Direct devices.", {});
+					} else {
+						device.configuredOptions(node, doRead);
+					}
+				} else {
+					node.error("Not configured!", {});
 				}
 			}
 		});
