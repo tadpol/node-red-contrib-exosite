@@ -15,8 +15,12 @@
         label: function() {
             if (this.connectBy == 'GWE') {
                 return "GWE";
+            } else if (this.connectBy == 'GMQ') {
+                return "GMQ=> " + this.productID + "; " + this.serialNumber;
+            } else if (this.productID && this.serialNumber) {
+                return this.productID + "; " + this.serialNumber;
             }
-            return (this.productID+"; "+this.serialNumber)||"exo-config-client";
+            return "exo-config-client";
         },
         labelStyle: function() {
             return this.productID?"node_label_italic":"";
