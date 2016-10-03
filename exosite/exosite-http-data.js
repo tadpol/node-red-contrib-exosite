@@ -1,6 +1,7 @@
 module.exports = function(RED) {
 	"use strict";
 	var https = require("follow-redirects").https;
+	var http = require("follow-redirects").http; // Only for local GMQ connects.
 	var urllib = require("url");
 	var querystring = require("querystring");
 	var fs = require('fs');
@@ -31,6 +32,15 @@ module.exports = function(RED) {
 	});
 
 	/**********************************************************************/
+	function shttps(opts) {
+		if (opts.protocol == 'http:') {
+			return http;
+		} else {
+			return https;
+		}
+	}
+
+	/**********************************************************************/
 	function ExositeConfigureClient(config) {
 		RED.nodes.createNode(this,config);
 		var cfgNode = this;
@@ -40,14 +50,14 @@ module.exports = function(RED) {
 
 		this.host = function() {
 			if (cfgNode.connectBy == "GWE" || cfgNode.connectBy == "GMQ") {
-				return "localhost:8090";
+				return "http://localhost:8090";
 			} else {
-				return cfgNode.productID + ".m2.exosite.com";
+				return 'https://'+cfgNode.productID + ".m2.exosite.com";
 			}
 		}
 
 		this.configuredOptions = function(node, callback) {
-			var Ropts = urllib.parse('https://'+cfgNode.host()+'/onep:v1/stack/alias');
+			var Ropts = urllib.parse(cfgNode.host()+'/onep:v1/stack/alias');
 			Ropts.headers = {};
 			Ropts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
 			Ropts.headers['Accept'] = 'application/x-www-form-urlencoded; charset=utf-8';
@@ -87,7 +97,7 @@ module.exports = function(RED) {
 				// Not yet, Need to activate.
 				node.status({fill:"blue",shape:"ring",text:"activating"});
 				node.log("Going to activate "+cfgNode.productID+"; " + cfgNode.serialNumber);
-				var opts = urllib.parse('https://'+cfgNode.host()+'/provision/activate')
+				var opts = urllib.parse(cfgNode.host()+'/provision/activate')
 				opts.method = 'POST';
 				opts.headers = {};
 				opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
@@ -161,7 +171,8 @@ module.exports = function(RED) {
 				}
 				opts.headers['content-length'] = Buffer.byteLength(payload);
 
-				var req = https.request(opts, function(result){
+				//node.log(":=: " + util.inspect(opts, {showHidden:false, depth: null}));
+				var req = shttps(opts).request(opts, function(result){
 					result.on('data', function (chunk) {});
 					result.on('end',function() {
 						node.status({});
@@ -223,8 +234,7 @@ module.exports = function(RED) {
 				opts.query = payload;
 				opts.path = opts.path + '?' + payload;
 
-				//node.log(JSON.stringify(opts));
-				var req = https.request(opts, function(result){
+				var req = shttps(opts).request(opts, function(result){
 					var allData = '';
 					result.on('data', function (chunk) {
 						allData = allData + chunk;
@@ -265,7 +275,6 @@ module.exports = function(RED) {
 	});
 
 	/**********************************************************************/
-	// TODO: add 'exo watch' which does a Long-Poll on a device & aliases.
 	function ExositeWatchClient(config) {
 		RED.nodes.createNode(this,config);
 		var node = this;
@@ -278,7 +287,7 @@ module.exports = function(RED) {
 			opts.query = config.alias;
 			opts.path = opts.path + '?' + config.alias;
 
-			node.req = https.request(opts, function(result){
+			node.req = shttps(opts).request(opts, function(result){
 				var allData = '';
 				result.on('data', function (chunk) {
 					if (allData == '') {
