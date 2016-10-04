@@ -114,16 +114,25 @@ module.exports = function(RED) {
 						recievedCIK = recievedCIK + chunk;
 					});
 					result.on('end',function() {
-						node.status({});
-						cfgNode.credentials.cik = recievedCIK;
-						Ropts.headers['X-Exosite-CIK'] = cfgNode.credentials.cik;
-						callback(Ropts);
+						if (result.statusCode != 200) {
+							var msg = {}
+							msg.title = 'Activation Error'
+							msg.payload = {code: result.statusCode, body: recievedCIK}
+							node.error("Failed to activate : " + recievedCIK, msg);
+							node.status({fill:"red",shape:"ring",text:recievedCIK});
+						} else {
+							node.log('finished activate req: ' + result.statusCode + ' '+ recievedCIK)
+							node.status({});
+							cfgNode.credentials.cik = recievedCIK;
+							Ropts.headers['X-Exosite-CIK'] = cfgNode.credentials.cik;
+							callback(Ropts);
+						}
 					});
 				});
 				req.on('error',function(err) {
-					msg.payload = err.toString();
-					msg.statusCode = err.code;
-					node.send(msg);
+					var msg = {}
+					msg.payload = err;
+					node.error("Failed to activate : " + err.toString(), msg);
 					node.status({fill:"red",shape:"ring",text:err.code});
 				});
 				req.write(payload);
