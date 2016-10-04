@@ -121,7 +121,6 @@ module.exports = function(RED) {
 							node.error("Failed to activate : " + recievedCIK, msg);
 							node.status({fill:"red",shape:"ring",text:recievedCIK});
 						} else {
-							node.log('finished activate req: ' + result.statusCode + ' '+ recievedCIK)
 							node.status({});
 							cfgNode.credentials.cik = recievedCIK;
 							Ropts.headers['X-Exosite-CIK'] = cfgNode.credentials.cik;
