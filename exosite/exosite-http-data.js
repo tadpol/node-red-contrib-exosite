@@ -312,6 +312,7 @@ module.exports = function(RED) {
 				});
 			});
 			node.req.on('error',function(err) {
+				var msg = {}
 				msg.payload = err.toString();
 				msg.statusCode = err.code;
 				node.send(msg);
