@@ -1,4 +1,4 @@
-# node-red-node-exosite
+# node-red-contrib-exosite
 
 A node-red node that accesses devices on [Exosite's Murano
 platform](http://exosite.com/).
