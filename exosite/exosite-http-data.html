@@ -15,8 +15,6 @@
         label: function() {
             if (this.connectBy == 'GWE') {
                 return "GWE";
-            } else if (this.connectBy == 'GMQ') {
-                return "GMQ=> " + this.productID + "; " + this.serialNumber;
             } else if (this.productID && this.serialNumber) {
                 return this.productID + "; " + this.serialNumber;
             }
@@ -27,10 +25,6 @@
         },
         oneditprepare: function() {
             $.getJSON('exosite-config-features', function(data){
-                if (!data.GMQ) {
-                    $('#node-config-input-connectBy option[value="GMQ"]').attr('disabled', 'disabled');
-                    $('#node-config-input-connectBy option[value="GMQ"]').text("GMQ not installed");
-                }
                 if (!data.GWE) {
                     $('#node-config-input-connectBy option[value="GWE"]').attr('disabled', 'disabled');
                     $('#node-config-input-connectBy option[value="GWE"]').text("GWE not installed");
@@ -54,6 +48,7 @@
             name: {value:""},
             alias: {value:""},
             device: {value:"", type: "exo-config-client",required:true},
+            gmq: {value: false},
         },
         credentials: {
             cik: {type:"password"}
@@ -78,6 +73,13 @@
             } else {
                 $('#node-input-cik-row').show();
             }
+            $.getJSON('exosite-config-features', function(data){
+                if (!data.GMQ) {
+                    $('#node-input-gmq').attr('disabled', 'disabled');
+                    $('label[for="node-input-gmq"]').attr('style','color: lightgrey');
+                    $('label[for="node-input-gmq"]').text('GMQ not installed');
+                }
+            });
         }
     });
     RED.nodes.registerType('exo-read-client',{
@@ -133,11 +135,10 @@
 
 <script type="text/x-red" data-template-name="exo-config-client">
     <div class="form-row">
-        <label for=""><i class="fa fa-tasks"></i> Using</label>
+        <label for=""><i class="fa fa-tasks"></i> Activate as</label>
         <select id="node-config-input-connectBy">
-            <option value="Direct">Direct</option>
+            <option value="Direct">Device</option>
             <option value="GWE">GWE</option>
-            <option value="GMQ">GMQ</option>
         </select>
     </div>
 
@@ -158,8 +159,6 @@ number. (`mr product enable <sn>` or from the Murano web UI).</p>
 <p>If Gateway Engine (GWE) is installed, you can write to aliases on its
 device.</p>
 
-<p>If Gateway Message Queuing (GMQ) is installed, then data can be routed through
-it to take advantage of its local proxying.</p>
 </script>
 
 <script type="text/x-red" data-template-name="exo-write-client">
@@ -170,6 +169,10 @@ it to take advantage of its local proxying.</p>
     <div class="form-row">
         <label for="node-input-device"><i class="fa fa-cube"></i> Device</label>
         <input type="text" id="node-input-device">
+    </div>
+    <div class="form-row">
+        <label for="node-input-gmq"><i class="fa fa-cube"></i> Use GMQ</label>
+        <input type="checkbox" id="node-input-gmq">
     </div>
     <div class="form-row node-input-useAuth-row" id="node-input-cik-row">
         <label for="node-input-cik"><i class="fa fa-lock"></i> CIK</label>
@@ -185,6 +188,9 @@ it to take advantage of its local proxying.</p>
     <p>A node that will write to a device on Exosite.</p>
     <p>If payload is a string or number, writes it to the specified alias.</p>
     <p>If payload is an object, the keys are the aliases and values are written</p>
+
+<p>If Gateway Message Queuing (GMQ) is installed, then data can be routed through
+it to take advantage of its local proxying.</p>
 </script>
 
 
