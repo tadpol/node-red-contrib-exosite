@@ -1,22 +1,22 @@
 {
-    "name"         : "node-red-contrib-exosite",
-    "version"      : "0.3.0",
-    "description"  : "A node for node-red that uses the data api to talk to Exosite's Murano",
-    "dependencies" : {
-        "follow-redirects":"0.0.3"
-    },
-    "license"      : "BSD-3-Clause",
-	"bugs"         : {
-		"url": "https://github.com/tadpol/node-red-node-exosite/issues"
+	"name"		   : "node-red-contrib-exosite",
+	"version"	   : "0.3.1",
+	"description"  : "A node for node-red that uses the data api to talk to Exosite's Murano",
+	"dependencies" : {
+		"follow-redirects":"0.0.3"
 	},
-    "repository"   : {
-        "type":"git",
-        "url":"https://github.com/tadpol/node-red-node-exosite.git"
-    },
-    "keywords": [ "node-red", "exosite", "oneplatform", "murano" ],
-    "node-red"     : {
-        "nodes": {
-            "exosite-http-data": "exosite/exosite-http-data.js"
-        }
-    }
+	"license"	   : "BSD-3-Clause",
+	"bugs"		   : {
+		"url": "https://github.com/tadpol/node-red-contrib-exosite/issues"
+	},
+	"repository"   : {
+		"type":"git",
+		"url":"https://github.com/tadpol/node-red-contrib-exosite.git"
+	},
+	"keywords": [ "node-red", "exosite", "oneplatform", "murano" ],
+	"node-red"	   : {
+		"nodes": {
+			"exosite-http-data": "exosite/exosite-http-data.js"
+		}
+	}
 }
