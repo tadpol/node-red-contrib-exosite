@@ -1,5 +1,5 @@
 {
-    "name"         : "node-red-node-exosite",
+    "name"         : "node-red-contrib-exosite",
     "version"      : "0.3.0",
     "description"  : "A node for node-red that uses the data api to talk to Exosite's Murano",
     "dependencies" : {
