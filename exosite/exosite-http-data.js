@@ -49,7 +49,7 @@ module.exports = function(RED) {
 		this.connectBy = config.connectBy;
 
 		this.host = function() {
-			if (cfgNode.connectBy == "GWE" || cfgNode.connectBy == "GMQ") {
+			if (cfgNode.connectBy == "GMQ") {
 				return "http://localhost:8090";
 			} else {
 				return 'https://'+cfgNode.productID + ".m2.exosite.com";
@@ -62,11 +62,7 @@ module.exports = function(RED) {
 			Ropts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
 			Ropts.headers['Accept'] = 'application/x-www-form-urlencoded; charset=utf-8';
 
-			if (hasGMQ && cfgNode.connectBy == "GMQ") {
-				Ropts.headers['X-Exosite-VMS'] = cfgNode.productID + " " + cfgNode.productID + " " + cfgNode.serialNumber;
-				callback(Ropts);
-
-			} else if (cfgNode.credentials.cik != null && cfgNode.credentials.cik != "") {
+			if (cfgNode.credentials.cik != null && cfgNode.credentials.cik != "") {
 				Ropts.headers['X-Exosite-CIK'] = cfgNode.credentials.cik;
 				callback(Ropts);
 
@@ -109,7 +105,7 @@ module.exports = function(RED) {
 				opts.headers['content-length'] = Buffer.byteLength(payload);
 
 				var recievedCIK = "";
-				var req = https.request(opts, function(result){
+				var req = shttps(opts).request(opts, function(result){
 					result.on('data', function (chunk) {
 						recievedCIK = recievedCIK + chunk;
 					});
