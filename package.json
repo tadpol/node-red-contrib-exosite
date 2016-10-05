@@ -1,6 +1,6 @@
 {
     "name"         : "node-red-node-exosite",
-    "version"      : "0.2.1",
+    "version"      : "0.3.0",
     "description"  : "A node for node-red that uses the data api to talk to Exosite's Murano",
     "dependencies" : {
         "follow-redirects":"0.0.3"

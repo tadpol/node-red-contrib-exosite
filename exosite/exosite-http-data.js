@@ -6,6 +6,7 @@ module.exports = function(RED) {
 	var querystring = require("querystring");
 	var fs = require('fs');
 	var exec = require('child_process').exec;
+	//var util = require('util');
 
 	/**********************************************************************/
 	var hasGWE = false;
@@ -16,6 +17,7 @@ module.exports = function(RED) {
 	} catch(err) {
 		hasGWE = false;
 	}
+	/*
 	if (hasGWE) {
 		try {
 			fs.statSync("/usr/local/bin/gmq");
@@ -23,7 +25,7 @@ module.exports = function(RED) {
 		} catch(err) {
 			hasGMQ = false;
 		}
-	}
+	}*/
 
 	RED.httpAdmin.get('/exosite-config-features',
 		RED.auth.needsPermission('exosite-config-features.read'),
@@ -49,11 +51,7 @@ module.exports = function(RED) {
 		this.connectBy = config.connectBy;
 
 		this.host = function() {
-			if (cfgNode.connectBy == "GWE" || cfgNode.connectBy == "GMQ") {
-				return "http://localhost:8090";
-			} else {
-				return 'https://'+cfgNode.productID + ".m2.exosite.com";
-			}
+			return 'https://'+cfgNode.productID + ".m2.exosite.com";
 		}
 
 		this.configuredOptions = function(node, callback) {
@@ -62,11 +60,7 @@ module.exports = function(RED) {
 			Ropts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
 			Ropts.headers['Accept'] = 'application/x-www-form-urlencoded; charset=utf-8';
 
-			if (hasGMQ && cfgNode.connectBy == "GMQ") {
-				Ropts.headers['X-Exosite-VMS'] = cfgNode.productID + " " + cfgNode.productID + " " + cfgNode.serialNumber;
-				callback(Ropts);
-
-			} else if (cfgNode.credentials.cik != null && cfgNode.credentials.cik != "") {
+			if (cfgNode.credentials.cik != null && cfgNode.credentials.cik != "") {
 				Ropts.headers['X-Exosite-CIK'] = cfgNode.credentials.cik;
 				callback(Ropts);
 
@@ -109,7 +103,7 @@ module.exports = function(RED) {
 				opts.headers['content-length'] = Buffer.byteLength(payload);
 
 				var recievedCIK = "";
-				var req = https.request(opts, function(result){
+				var req = shttps(opts).request(opts, function(result){
 					result.on('data', function (chunk) {
 						recievedCIK = recievedCIK + chunk;
 					});
@@ -121,7 +115,6 @@ module.exports = function(RED) {
 							node.error("Failed to activate : " + recievedCIK, msg);
 							node.status({fill:"red",shape:"ring",text:recievedCIK});
 						} else {
-							node.log('finished activate req: ' + result.statusCode + ' '+ recievedCIK)
 							node.status({});
 							cfgNode.credentials.cik = recievedCIK;
 							Ropts.headers['X-Exosite-CIK'] = cfgNode.credentials.cik;
@@ -181,6 +174,11 @@ module.exports = function(RED) {
 				opts.headers['content-length'] = Buffer.byteLength(payload);
 
 				//node.log(":=: " + util.inspect(opts, {showHidden:false, depth: null}));
+				if (hasGMQ && config.gmq) {
+					var newopts = urllib.parse('http://localhost:8090/onep:v1/stack/alias');
+					newopts.headers = opts.headers;
+					opts = newopts;
+				}
 				var req = shttps(opts).request(opts, function(result){
 					result.on('data', function (chunk) {});
 					result.on('end',function() {
@@ -243,7 +241,7 @@ module.exports = function(RED) {
 				opts.query = payload;
 				opts.path = opts.path + '?' + payload;
 
-				var req = shttps(opts).request(opts, function(result){
+				var req = https.request(opts, function(result){
 					var allData = '';
 					result.on('data', function (chunk) {
 						allData = allData + chunk;
@@ -296,7 +294,7 @@ module.exports = function(RED) {
 			opts.query = config.alias;
 			opts.path = opts.path + '?' + config.alias;
 
-			node.req = shttps(opts).request(opts, function(result){
+			node.req = https.request(opts, function(result){
 				var allData = '';
 				result.on('data', function (chunk) {
 					if (allData == '') {
@@ -315,6 +313,7 @@ module.exports = function(RED) {
 				});
 			});
 			node.req.on('error',function(err) {
+				var msg = {}
 				msg.payload = err.toString();
 				msg.statusCode = err.code;
 				node.send(msg);
@@ -327,11 +326,7 @@ module.exports = function(RED) {
 			if (node.running) {
 				var device = RED.nodes.getNode(config.device);
 				if (device) {
-					if (device.connectBy != "Direct") {
-						node.error("Watch only works with Direct devices.", {});
-					} else {
-						device.configuredOptions(node, doRead);
-					}
+					device.configuredOptions(node, doRead);
 				} else {
 					node.error("Not configured!", {});
 				}
