@@ -17,6 +17,7 @@ module.exports = function(RED) {
 	} catch(err) {
 		hasGWE = false;
 	}
+	/*
 	if (hasGWE) {
 		try {
 			fs.statSync("/usr/local/bin/gmq");
@@ -24,7 +25,7 @@ module.exports = function(RED) {
 		} catch(err) {
 			hasGMQ = false;
 		}
-	}
+	}*/
 
 	RED.httpAdmin.get('/exosite-config-features',
 		RED.auth.needsPermission('exosite-config-features.read'),

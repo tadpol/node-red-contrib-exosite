@@ -73,13 +73,13 @@
             } else {
                 $('#node-input-cik-row').show();
             }
-            $.getJSON('exosite-config-features', function(data){
+            /*$.getJSON('exosite-config-features', function(data){
                 if (!data.GMQ) {
                     $('#node-input-gmq').attr('disabled', 'disabled');
                     $('label[for="node-input-gmq"]').attr('style','color: lightgrey');
                     $('label[for="node-input-gmq"]').text('GMQ not installed');
                 }
-            });
+            });*/
         }
     });
     RED.nodes.registerType('exo-read-client',{
@@ -170,10 +170,10 @@ device.</p>
         <label for="node-input-device"><i class="fa fa-cube"></i> Device</label>
         <input type="text" id="node-input-device">
     </div>
-    <div class="form-row">
+    <!-- <div class="form-row">
         <label for="node-input-gmq"><i class="fa fa-cube"></i> Use GMQ</label>
         <input type="checkbox" id="node-input-gmq">
-    </div>
+    </div> -->
     <div class="form-row node-input-useAuth-row" id="node-input-cik-row">
         <label for="node-input-cik"><i class="fa fa-lock"></i> CIK</label>
         <input type="password" id="node-input-cik">
