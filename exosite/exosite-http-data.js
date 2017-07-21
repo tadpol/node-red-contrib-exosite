@@ -34,6 +34,7 @@ module.exports = function(RED) {
 		});
 
 	/**********************************************************************/
+	// Because if using GMQ, it is a http connection to localhost.
 	function shttps(opts) {
 		if (opts.protocol == 'http:') {
 			return http;
@@ -51,7 +52,11 @@ module.exports = function(RED) {
 		this.connectBy = config.connectBy;
 
 		this.host = function() {
-			return 'https://'+cfgNode.productID + '.m2.exosite.com';
+			if ((cfgNode.domain || '').length == 0) {
+				return 'https://' + cfgNode.productID + '.m2.exosite.com';
+			} else {
+				return 'https://' + cfgNode.domain;
+			}
 		};
 
 		this.configuredOptions = function(node, callback) {
@@ -91,15 +96,13 @@ module.exports = function(RED) {
 			} else {
 				// Not yet, Need to activate.
 				node.status({fill:'blue',shape:'ring',text:'activating'});
-				node.log('Going to activate '+cfgNode.productID+'; ' + cfgNode.serialNumber);
+				node.log('Going to activate '+ cfgNode.serialNumber + ' @ ' + cfgNode.domain);
 				var opts = urllib.parse(cfgNode.host()+'/provision/activate');
 				opts.method = 'POST';
 				opts.headers = {};
 				opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
 				var payload = querystring.stringify({
-					vendor: cfgNode.productID,
-					model: cfgNode.productID,
-					sn: cfgNode.serialNumber
+					sn: cfgNode.serialNumber // FIXME: or id?
 				});
 				opts.headers['content-length'] = Buffer.byteLength(payload);
 
@@ -347,4 +350,4 @@ module.exports = function(RED) {
 	RED.nodes.registerType('exo-watch-client', ExositeWatchClient, {});
 };
 
-/*	vim: set cin sw=4 ts=4 : */
+/*	vim: set cin sw=2 ts=2 : */

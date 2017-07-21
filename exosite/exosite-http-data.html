@@ -4,6 +4,7 @@
         color: '#a6bbcf',
         defaults: {
             productID: {value:""},
+            domain: {value:""},
             serialNumber: {value:""},
             connectBy: {value:"Direct", required:true},
         },
@@ -15,13 +16,13 @@
         label: function() {
             if (this.connectBy == 'GWE') {
                 return "GWE";
-            } else if (this.productID && this.serialNumber) {
-                return this.productID + "; " + this.serialNumber;
+            } else if ((this.productID || this.domain) && this.serialNumber) {
+                return this.serialNumber + " @ " + (this.domain || this.productID);
             }
             return "exo-config-client";
         },
         labelStyle: function() {
-            return this.productID?"node_label_italic":"";
+            return this.domain?"node_label_italic":"";
         },
         oneditprepare: function() {
             $.getJSON('exosite-config-features', function(data){
@@ -39,6 +40,13 @@
                 }
             });
             $('#node-config-input-connectBy').change();
+            // If productID exists, show it, Otherwise keep it hidden
+            var cik = $('#node-config-input-productID').val();
+            if (cik == null || cik == '') {
+                $('#node-config-input-productID-row').hide();
+            } else {
+                $('#node-config-input-productID-row').show();
+            }
         },
     });
     RED.nodes.registerType('exo-write-client',{
@@ -143,18 +151,22 @@
     </div>
 
     <div class="form-row exo-config-row">
+        <label for="node-config-input-domain"><i class="fa fa-tag"></i> Domain</label>
+        <input type="text" id="node-config-input-domain" placeholder="Domain">
+    </div>
+    <div class="form-row exo-config-row" id="node-config-input-productID-row">
         <label for="node-config-input-productID"><i class="fa fa-tag"></i> Product ID</label>
         <input type="text" id="node-config-input-productID" placeholder="Product ID">
     </div>
     <div class="form-row exo-config-row">
-        <label for="node-config-input-serialNumber"><i class="fa fa-server"></i> Serial Number</label>
-        <input type="text" id="node-config-input-serialNumber" placeholder="Serial Number">
+        <label for="node-config-input-serialNumber"><i class="fa fa-server"></i> Identifier</label>
+        <input type="text" id="node-config-input-serialNumber" placeholder="Identifier">
     </div>
 </script>
 <script type="text/x-red" data-help-name="exo-config-client">
-<p>Configures a device by product ID and serial number.  Before any reads or
-writes, this will activate the serial number first.  So you must enable the serial
-number. (`mr product enable <sn>` or from the Murano web UI).</p>
+<p>Configures a device by product ID and identifier.  Before any reads or
+writes, this will activate the identifier first.  So you must enable the
+identifier. (`murano device enable <id>` or from the Murano Web UI).</p>
 
 <p>If Gateway Engine (GWE) is installed, you can write to aliases on its
 device.</p>
