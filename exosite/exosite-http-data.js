@@ -204,12 +204,8 @@ module.exports = function(RED) {
 			if (device) {
 				device.configuredOptions(node, doWrite);
 			} else {
-				// Old style
-				var opts = urllib.parse('https://'+config.productID+'m2.exosite.com/onep:v1/stack/alias');
-				opts.headers = {};
-				opts.headers['X-Exosite-CIK'] = this.credentials.cik;
-				opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
-				doWrite(opts);
+				node.status({fill:'red',shape:'ring',text:'CIKs no longer supported.'});
+				node.error('CIKs no longer supported');
 			}
 
 		});
@@ -270,12 +266,8 @@ module.exports = function(RED) {
 				device.configuredOptions(node, doRead);
 			} else {
 				// Old style
-				var opts = urllib.parse('https://'+config.productID+'m2.exosite.com/onep:v1/stack/alias');
-				opts.headers = {};
-				opts.headers['X-Exosite-CIK'] = this.credentials.cik;
-				opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
-				opts.headers['Accept'] = 'application/x-www-form-urlencoded; charset=utf-8';
-				doRead(opts);
+				node.status({fill:'red',shape:'ring',text:'CIKs no longer supported.'});
+				node.error('CIKs no longer supported');
 			}
 		});
 	}
