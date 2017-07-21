@@ -15,7 +15,7 @@ wrote.  Each device instance is defined by a product ID and serial number.
 If node-red is running on a machine that also has [Gateway Engine](https://gateway-engine.exosite.io/index.html) (GWE)
 installed, you can select 'GWE' to access the Gateway Engine's device instance.
 
-A device instance in Murano needs to be in the 'notactivated' state so that it can
-be activated by the exosite node-red node.  This happens when you create a new
-device in Murano.
+A device instance in Murano needs to be in the 'notactivated' or 'whitelisted' state
+so that it can be activated by the exosite node-red node.  This happens when you
+create a new device in Murano.
 
