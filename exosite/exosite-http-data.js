@@ -47,16 +47,24 @@ module.exports = function(RED) {
 	function ExositeConfigureClient(config) {
 		RED.nodes.createNode(this,config);
 		var cfgNode = this;
+		this.domain = config.domain;
 		this.productID = config.productID;
 		this.serialNumber = config.serialNumber;
 		this.connectBy = config.connectBy;
 
 		this.host = function() {
-			if ((cfgNode.domain || '').length == 0) {
-				return 'https://' + cfgNode.productID + '.m2.exosite.com';
-			} else {
-				return 'https://' + cfgNode.domain;
+			var productID = config.productID;
+
+			if (productID != null && productID != '') {
+				// Convert to domain.
+				cfgNode.domain = productID + '.m2.exosite.com';
+				config.domain = cfgNode.domain;
+				cfgNode.productID = null;
+				cfgNode.error('Found productID: ' + productID +
+					'; converting to domain: ' + cfgNode.domain);
 			}
+
+			return 'https://' + cfgNode.domain;
 		};
 
 		this.configuredOptions = function(node, callback) {
