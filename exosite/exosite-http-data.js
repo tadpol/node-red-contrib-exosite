@@ -1,9 +1,9 @@
 module.exports = function(RED) {
-	"use strict";
-	var https = require("follow-redirects").https;
-	var http = require("follow-redirects").http; // Only for local GMQ connects.
-	var urllib = require("url");
-	var querystring = require("querystring");
+	'use strict';
+	var https = require('follow-redirects').https;
+	var http = require('follow-redirects').http; // Only for local GMQ connects.
+	var urllib = require('url');
+	var querystring = require('querystring');
 	var fs = require('fs');
 	var exec = require('child_process').exec;
 	//var util = require('util');
@@ -12,7 +12,7 @@ module.exports = function(RED) {
 	var hasGWE = false;
 	var hasGMQ = false;
 	try {
-		fs.statSync("/usr/local/bin/gwe");
+		fs.statSync('/usr/local/bin/gwe');
 		hasGWE = true;
 	} catch(err) {
 		hasGWE = false;
@@ -20,7 +20,7 @@ module.exports = function(RED) {
 	/*
 	if (hasGWE) {
 		try {
-			fs.statSync("/usr/local/bin/gmq");
+			fs.statSync('/usr/local/bin/gmq');
 			hasGMQ = true;
 		} catch(err) {
 			hasGMQ = false;
@@ -30,8 +30,8 @@ module.exports = function(RED) {
 	RED.httpAdmin.get('/exosite-config-features',
 		RED.auth.needsPermission('exosite-config-features.read'),
 		function(req,res) {
-		res.json({"GWE":hasGWE, "GMQ":hasGMQ});
-	});
+			res.json({'GWE':hasGWE, 'GMQ':hasGMQ});
+		});
 
 	/**********************************************************************/
 	function shttps(opts) {
@@ -51,8 +51,8 @@ module.exports = function(RED) {
 		this.connectBy = config.connectBy;
 
 		this.host = function() {
-			return 'https://'+cfgNode.productID + ".m2.exosite.com";
-		}
+			return 'https://'+cfgNode.productID + '.m2.exosite.com';
+		};
 
 		this.configuredOptions = function(node, callback) {
 			var Ropts = urllib.parse(cfgNode.host()+'/onep:v1/stack/alias');
@@ -60,17 +60,18 @@ module.exports = function(RED) {
 			Ropts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
 			Ropts.headers['Accept'] = 'application/x-www-form-urlencoded; charset=utf-8';
 
-			if (cfgNode.credentials.cik != null && cfgNode.credentials.cik != "") {
+			if (cfgNode.credentials.cik != null && cfgNode.credentials.cik != '') {
 				Ropts.headers['X-Exosite-CIK'] = cfgNode.credentials.cik;
 				callback(Ropts);
 
-			} else if (hasGWE && cfgNode.connectBy == "GWE") {
-				node.status({fill:"blue",shape:"ring",text:"activating"});
-				node.log("Fetching the GWE CIK");
-				exec("/usr/local/bin/gwe --gateway-cik", function(err,stdout,stderr) {
+			} else if (hasGWE && cfgNode.connectBy == 'GWE') {
+				node.status({fill:'blue',shape:'ring',text:'activating'});
+				node.log('Fetching the GWE CIK');
+				exec('/usr/local/bin/gwe --gateway-cik', function(err,stdout,stderr) {
 					if (err) {
-						RED.log.info("Failed to fetch Gateway's CIK");
-						node.status({fill:"red",shape:"ring",text:"Failed to fetch CIK"});
+						RED.log.info('Failed to fetch Gateway\'s CIK');
+						RED.log.info(stderr);
+						node.status({fill:'red',shape:'ring',text:'Failed to fetch CIK'});
 					}
 					else {
 						try {
@@ -81,17 +82,17 @@ module.exports = function(RED) {
 							callback(Ropts);
 						}
 						catch(e) {
-							RED.log.info("Failed to parse CIK",stdout.trim());
-							node.status({fill:"red",shape:"ring",text:"Failed to parse CIK"});
+							RED.log.info('Failed to parse CIK',stdout.trim());
+							node.status({fill:'red',shape:'ring',text:'Failed to parse CIK'});
 						}
 					}
 				});
 
 			} else {
 				// Not yet, Need to activate.
-				node.status({fill:"blue",shape:"ring",text:"activating"});
-				node.log("Going to activate "+cfgNode.productID+"; " + cfgNode.serialNumber);
-				var opts = urllib.parse(cfgNode.host()+'/provision/activate')
+				node.status({fill:'blue',shape:'ring',text:'activating'});
+				node.log('Going to activate '+cfgNode.productID+'; ' + cfgNode.serialNumber);
+				var opts = urllib.parse(cfgNode.host()+'/provision/activate');
 				opts.method = 'POST';
 				opts.headers = {};
 				opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
@@ -102,18 +103,18 @@ module.exports = function(RED) {
 				});
 				opts.headers['content-length'] = Buffer.byteLength(payload);
 
-				var recievedCIK = "";
+				var recievedCIK = '';
 				var req = shttps(opts).request(opts, function(result){
 					result.on('data', function (chunk) {
 						recievedCIK = recievedCIK + chunk;
 					});
 					result.on('end',function() {
 						if (result.statusCode != 200) {
-							var msg = {}
-							msg.title = 'Activation Error'
-							msg.payload = {code: result.statusCode, body: recievedCIK}
-							node.error("Failed to activate : " + recievedCIK, msg);
-							node.status({fill:"red",shape:"ring",text:recievedCIK});
+							var msg = {};
+							msg.title = 'Activation Error';
+							msg.payload = {code: result.statusCode, body: recievedCIK};
+							node.error('Failed to activate : ' + recievedCIK, msg);
+							node.status({fill:'red',shape:'ring',text:recievedCIK});
 						} else {
 							node.status({});
 							cfgNode.credentials.cik = recievedCIK;
@@ -123,21 +124,21 @@ module.exports = function(RED) {
 					});
 				});
 				req.on('error',function(err) {
-					var msg = {}
+					var msg = {};
 					msg.payload = err;
-					node.error("Failed to activate : " + err.toString(), msg);
-					node.status({fill:"red",shape:"ring",text:err.code});
+					node.error('Failed to activate : ' + err.toString(), msg);
+					node.status({fill:'red',shape:'ring',text:err.code});
 				});
 				req.write(payload);
 				req.end();
 			}
-		}
+		};
 
 	}
 
-	RED.nodes.registerType("exo-config-client", ExositeConfigureClient, {
+	RED.nodes.registerType('exo-config-client', ExositeConfigureClient, {
 		credentials: {
-			cik: {type:"password"}
+			cik: {type:'password'}
 		}
 	});
 
@@ -147,7 +148,7 @@ module.exports = function(RED) {
 		var node = this;
 		this.on('input', function(msg) {
 			function doWrite(opts) {
-				node.status({fill:"blue",shape:"dot",text:"writing"});
+				node.status({fill:'blue',shape:'dot',text:'writing'});
 				opts.method = 'POST';
 				var payload;
 				if (typeof(msg.payload) === 'string') {
@@ -158,14 +159,14 @@ module.exports = function(RED) {
 					} else {
 						payload = msg.payload;
 					}
-				} else if (typeof msg.payload === "number") {
+				} else if (typeof msg.payload === 'number') {
 					if (config.alias != null && config.alias != '') {
-						var f={};
-						f[config.alias] = msg.payload+"";
-						payload = querystring.stringify(f);
+						var fe={};
+						fe[config.alias] = msg.payload+'';
+						payload = querystring.stringify(fe);
 					} else {
 						// this will fail.
-						payload = msg.payload+"";
+						payload = msg.payload+'';
 						// FIXME: log an error (status will be updated when call errors)
 					}
 				} else {
@@ -173,14 +174,14 @@ module.exports = function(RED) {
 				}
 				opts.headers['content-length'] = Buffer.byteLength(payload);
 
-				//node.log(":=: " + util.inspect(opts, {showHidden:false, depth: null}));
+				//node.log(':=: ' + util.inspect(opts, {showHidden:false, depth: null}));
 				if (hasGMQ && config.gmq) {
 					var newopts = urllib.parse('http://localhost:8090/onep:v1/stack/alias');
 					newopts.headers = opts.headers;
 					opts = newopts;
 				}
 				var req = shttps(opts).request(opts, function(result){
-					result.on('data', function (chunk) {});
+					result.on('data', function () {});
 					result.on('end',function() {
 						node.status({});
 					});
@@ -189,7 +190,7 @@ module.exports = function(RED) {
 					msg.payload = err.toString();
 					msg.statusCode = err.code;
 					node.send(msg);
-					node.status({fill:"red",shape:"ring",text:err.code});
+					node.status({fill:'red',shape:'ring',text:err.code});
 				});
 				req.write(payload);
 				req.end();
@@ -201,7 +202,7 @@ module.exports = function(RED) {
 				device.configuredOptions(node, doWrite);
 			} else {
 				// Old style
-				var opts = urllib.parse('https://'+productID+'m2.exosite.com/onep:v1/stack/alias');
+				var opts = urllib.parse('https://'+config.productID+'m2.exosite.com/onep:v1/stack/alias');
 				opts.headers = {};
 				opts.headers['X-Exosite-CIK'] = this.credentials.cik;
 				opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
@@ -210,9 +211,9 @@ module.exports = function(RED) {
 
 		});
 	}
-	RED.nodes.registerType("exo-write-client", ExositeWriteClient, {
+	RED.nodes.registerType('exo-write-client', ExositeWriteClient, {
 		credentials: {
-			cik: {type:"password"}
+			cik: {type:'password'}
 		}
 	});
 
@@ -222,10 +223,10 @@ module.exports = function(RED) {
 		var node = this;
 		this.on('input', function(msg) {
 			function doRead(opts) {
-				node.status({fill:"blue",shape:"dot",text:"reading"});
+				node.status({fill:'blue',shape:'dot',text:'reading'});
 				opts.method = 'GET';
 				var payload;
-				if (typeof(msg.payload) === 'string' || typeof msg.payload === "number") {
+				if (typeof(msg.payload) === 'string' || typeof msg.payload === 'number') {
 					payload = msg.payload + '';
 				} else {
 					if ( msg.payload.length ) {
@@ -256,7 +257,7 @@ module.exports = function(RED) {
 					msg.payload = err.toString();
 					msg.statusCode = err.code;
 					node.send(msg);
-					node.status({fill:"red",shape:"ring",text:err.code});
+					node.status({fill:'red',shape:'ring',text:err.code});
 				});
 				req.end();
 			}
@@ -266,7 +267,7 @@ module.exports = function(RED) {
 				device.configuredOptions(node, doRead);
 			} else {
 				// Old style
-				var opts = urllib.parse('https://'+productID+'m2.exosite.com/onep:v1/stack/alias');
+				var opts = urllib.parse('https://'+config.productID+'m2.exosite.com/onep:v1/stack/alias');
 				opts.headers = {};
 				opts.headers['X-Exosite-CIK'] = this.credentials.cik;
 				opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
@@ -275,9 +276,9 @@ module.exports = function(RED) {
 			}
 		});
 	}
-	RED.nodes.registerType("exo-read-client", ExositeReadClient, {
+	RED.nodes.registerType('exo-read-client', ExositeReadClient, {
 		credentials: {
-			cik: {type:"password"}
+			cik: {type:'password'}
 		}
 	});
 
@@ -290,7 +291,7 @@ module.exports = function(RED) {
 		// Setup and watch
 		function doRead(opts) {
 			opts.method = 'GET';
-			opts.headers['Request-Timeout'] = "300000";
+			opts.headers['Request-Timeout'] = '300000';
 			opts.query = config.alias;
 			opts.path = opts.path + '?' + config.alias;
 
@@ -298,7 +299,7 @@ module.exports = function(RED) {
 				var allData = '';
 				result.on('data', function (chunk) {
 					if (allData == '') {
-						node.status({fill:"blue",shape:"dot",text:"reading"});
+						node.status({fill:'blue',shape:'dot',text:'reading'});
 					}
 					allData = allData + chunk;
 				});
@@ -309,41 +310,41 @@ module.exports = function(RED) {
 						node.send(msg);
 					}
 					node.status({});
-					setTimeout( function() { node.emit("input",{}); }, 100 );
+					setTimeout( function() { node.emit('input',{}); }, 100 );
 				});
 			});
 			node.req.on('error',function(err) {
-				var msg = {}
+				var msg = {};
 				msg.payload = err.toString();
 				msg.statusCode = err.code;
 				node.send(msg);
-				node.status({fill:"red",shape:"ring",text:err.code});
+				node.status({fill:'red',shape:'ring',text:err.code});
 			});
 			node.req.end();
 		}
 
-		this.on('input', function(msg) {
+		this.on('input', function() {
 			if (node.running) {
 				var device = RED.nodes.getNode(config.device);
 				if (device) {
 					device.configuredOptions(node, doRead);
 				} else {
-					node.error("Not configured!", {});
+					node.error('Not configured!', {});
 				}
 			}
 		});
 
-		this.on('close', function(msg) {
+		this.on('close', function() {
 			node.running = false;
-			if (node.req != nil) {
+			if (node.req != null) {
 				node.req.abort();
 			}
 		});
 
 		// Start it up.
-		node.emit("input",{});
+		node.emit('input',{});
 	}
-	RED.nodes.registerType("exo-watch-client", ExositeWatchClient, {});
-}
+	RED.nodes.registerType('exo-watch-client', ExositeWatchClient, {});
+};
 
 /*	vim: set cin sw=4 ts=4 : */
