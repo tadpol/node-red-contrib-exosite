@@ -110,7 +110,7 @@ module.exports = function(RED) {
 				opts.headers = {};
 				opts.headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
 				var payload = querystring.stringify({
-					sn: cfgNode.serialNumber
+					id: cfgNode.serialNumber
 				});
 				opts.headers['content-length'] = Buffer.byteLength(payload);
 
