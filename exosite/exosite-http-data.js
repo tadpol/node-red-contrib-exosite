@@ -176,12 +176,17 @@ module.exports = function(RED) {
 						fe[config.alias] = msg.payload+'';
 						payload = querystring.stringify(fe);
 					} else {
-						// this will fail.
+						// this will fail because it is missing an alias.
 						payload = msg.payload+'';
-						// FIXME: log an error (status will be updated when call errors)
+						node.error("Sending a number without an alias!");
 					}
 				} else {
-					payload = querystring.stringify(msg.payload);
+					if (config.alias != null && config.alias != '') {
+						f[config.alias] = JSON.stringify(msg.payload);
+						payload = querystring.stringify(fe);
+					} else {
+						payload = querystring.stringify(msg.payload);
+					}
 				}
 				opts.headers['content-length'] = Buffer.byteLength(payload);
 
