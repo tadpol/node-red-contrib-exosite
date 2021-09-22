@@ -1,3 +1,5 @@
+This repo is no longer maintained, and thus archived.  Use at your own risk.
+
 # node-red-contrib-exosite
 
 A node-red node that accesses devices on [Exosite's Murano
